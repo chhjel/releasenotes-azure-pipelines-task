@@ -5,6 +5,8 @@
 
 variables:
 - group: variable-group
+- name: BuildParameters.MainBranchName
+  value: main
 - name: BuildParameters.CleanSourceBranch
   value: $[replace(variables['Build.SourceBranch'], 'refs/heads/', '')]
 - name: BuildParameters.IsMain
