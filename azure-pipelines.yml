@@ -13,16 +13,10 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: TfxInstaller@3
-  displayName: 'Install TFX tool'
-  inputs:
-    version: "v0.7.x"
-
 - task: NodeTool@0
   displayName: 'Install Node.js 10.x'
   inputs:
     versionSpec: '10.x'
-
 - script: |
     cd buildAndReleaseTask
     npm install -g webpack webpack-cli --save-dev
@@ -30,6 +24,10 @@ steps:
     npx webpack --config webpack.config.js
   displayName: 'npm install, run webpack'
 
+- task: TfxInstaller@3
+  displayName: 'Install TFX tool'
+  inputs:
+    version: "v0.7.x"
 - task: QueryAzureDevOpsExtensionVersion@3
   inputs:
     connectTo: 'VsTeam'
