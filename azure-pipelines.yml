@@ -3,6 +3,9 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
+variables:
+  - group: variable-group
+
 trigger:
 - main
 
@@ -10,6 +13,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- task: TfxInstaller@3
+  displayName: 'Install TFX tool'
+  inputs:
+    version: "v0.7.x"
+
 - task: NodeTool@0
   displayName: 'Install Node.js 10.x'
   inputs:
@@ -21,3 +29,51 @@ steps:
     npm install
     npx webpack --config webpack.config.js
   displayName: 'npm install, run webpack'
+
+- task: QueryAzureDevOpsExtensionVersion@3
+  inputs:
+    connectTo: 'VsTeam'
+    connectedServiceName: 'marketplace.visualstudio.com'
+    publisherId: '$(PublisherID)'
+    extensionId: '$(ExtensionID)'
+    versionAction: 'Patch'
+    outputVariable: 'Task.Extension.Version'
+- task: PackageAzureDevOpsExtension@3
+  inputs:
+    rootFolder: '$(System.DefaultWorkingDirectory)'
+    publisherId: '$(PublisherID)'
+    extensionId: '$(ExtensionID)'
+    extensionName: '$(ExtensionName)'
+    extensionVersion: '$(Task.Extension.Version)'
+    updateTasksVersion: true
+    updateTasksVersionType: 'patch'
+    extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
+    extensionPricing: 'free'
+- task: CopyFiles@2
+  displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)"
+  inputs:
+    Contents: "**/*.vsix"
+    TargetFolder: "$(Build.ArtifactStagingDirectory)"
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: '$(ArtifactName)'
+    publishLocation: 'Container'
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: "current"
+    downloadType: "single"
+    artifactName: "$(ArtifactName)"
+    downloadPath: "$(System.DefaultWorkingDirectory)"
+- task: PublishAzureDevOpsExtension@3
+  inputs:
+    connectTo: 'VsTeam'
+    connectedServiceName: 'marketplace.visualstudio.com'
+    fileType: 'vsix'
+    vsixFile: '/Publisher.*.vsix'
+    publisherId: '$(PublisherID)'
+    extensionId: '$(ExtensionID)'
+    extensionName: '$(ExtensionName)'
+    updateTasksVersion: false
+    extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
+    extensionPricing: 'free'
