@@ -68,10 +68,11 @@ steps:
     connectTo: 'VsTeam'
     connectedServiceName: 'marketplace.visualstudio.com'
     fileType: 'vsix'
-    vsixFile: '**/*.vsix'
+    vsixFile: 'BuiltExtension/*.vsix'
     publisherId: '$(PublisherID)'
     extensionId: '$(ExtensionID)'
     extensionName: '$(ExtensionName)'
     updateTasksVersion: false
     extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
     extensionPricing: 'free'
+    arguments: 
