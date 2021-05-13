@@ -68,7 +68,7 @@ steps:
     connectTo: 'VsTeam'
     connectedServiceName: 'marketplace.visualstudio.com'
     fileType: 'vsix'
-    vsixFile: '/BuiltExtension/$(PublisherID).*.vsix'
+    vsixFile: '/$(PublisherID).*.vsix'
     publisherId: '$(PublisherID)'
     extensionId: '$(ExtensionID)'
     extensionName: '$(ExtensionName)'
