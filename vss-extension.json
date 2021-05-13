@@ -1,0 +1,36 @@
+{
+    "manifestVersion": 1,
+    "id": "releasenotes-azure-pipelines-task",
+    "name": "Create release note data",
+    "version": "0.0.2",
+    "publisher": "ChristianH",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],    
+    "description": "Creates release notes data from commit log back to previously commit with matching tag.",
+    "categories": [
+        "Azure Pipelines"
+    ],
+    "icons": {
+        "default": "images/extension-icon.png"        
+    },
+    "files": [
+        {
+            "path": "buildAndReleaseTask"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "releasenotes-azure-pipelines-task-1",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "buildAndReleaseTask"
+            }
+        }
+    ]
+}

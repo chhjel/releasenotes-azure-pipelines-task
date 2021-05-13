@@ -1,0 +1,55 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+    "id": "ee777cf6-24d3-4fee-9177-2be75edd23b3",
+    "name": "releasenotes-azure-pipelines-task",
+    "friendlyName": "Create release notes from GIT",
+    "description": "Creates release notes data from commit log back to previously commit with matching tag.",
+    "helpMarkDown": "",
+    "category": "Utility",
+    "author": "Christian H.",
+    "version": {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 2
+    },
+    "instanceNameFormat": "Create release notes data",
+    "inputs": [
+        {
+            "name": "jsonReleaseNotesPath",
+            "type": "string",
+            "label": "ReleaseNotes.json path",
+            "defaultValue": "ReleaseNotes.json",
+            "required": false,
+            "helpMarkDown": "Optional path to output release note data in json format."
+        },
+        {
+            "name": "buildMetadataJsonPath",
+            "type": "string",
+            "label": "BuildMetadata.json path",
+            "defaultValue": "BuildMetadata.json",
+            "required": false,
+            "helpMarkDown": "Optional path to output build metadata data in json format."
+        },
+        {
+            "name": "nuspecPath",
+            "type": "string",
+            "label": "Nuspec path",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "Optional path to a nuspec that will have its release notes element set."
+        },
+        {
+            "name": "versionNumber",
+            "type": "string",
+            "label": "Version number",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "Optional version number to include in buildmetadata and releasenotes json output."
+        }
+    ],
+    "execution": {
+        "Node10": {
+            "target": "dist/index.js"
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "outDir": "./built/",
+        "sourceMap": false,
+        "strict": true,
+        "target": "ES6",
+        "module": "commonjs",
+        // "lib": [ "es2020.string" ],
+        "experimentalDecorators": true,
+        "paths": {
+        }
+    }
+}
