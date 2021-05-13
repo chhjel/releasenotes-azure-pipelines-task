@@ -4,7 +4,15 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 variables:
-  - group: variable-group
+- group: variable-group
+- name: BuildParameters.CleanSourceBranch
+  value: $[replace(variables['Build.SourceBranch'], 'refs/heads/', '')]
+- name: BuildParameters.IsMain
+  value: $[eq(variables['BuildParameters.CleanSourceBranch'], variables['BuildParameters.MainBranchName'])]
+- name: BuildParameters.IsPr
+  value: $[eq(variables['Build.Reason'], 'PullRequest')]
+- name: BuildParameters.Publish
+  value: $[eq(variables['BuildParameters.IsMain'], 'true')]
 
 trigger:
 - main
@@ -25,10 +33,12 @@ steps:
   displayName: 'npm install, run webpack'
 
 - task: TfxInstaller@3
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   displayName: 'Install TFX tool'
   inputs:
     version: "v0.7.x"
 - task: QueryAzureDevOpsExtensionVersion@3
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   inputs:
     connectTo: 'VsTeam'
     connectedServiceName: 'marketplace.visualstudio.com'
@@ -37,6 +47,7 @@ steps:
     versionAction: 'Patch'
     outputVariable: 'Task.Extension.Version'
 - task: PackageAzureDevOpsExtension@3
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   inputs:
     rootFolder: '$(System.DefaultWorkingDirectory)'
     publisherId: '$(PublisherID)'
@@ -48,22 +59,26 @@ steps:
     extensionVisibility: 'private' # Change to public if you're publishing to the marketplace
     extensionPricing: 'free'
 - task: CopyFiles@2
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)"
   inputs:
     Contents: "**/*.vsix"
     TargetFolder: "$(Build.ArtifactStagingDirectory)"
 - task: PublishBuildArtifacts@1
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: '$(ArtifactName)'
     publishLocation: 'Container'
 - task: DownloadBuildArtifacts@0
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   inputs:
     buildType: "current"
     downloadType: "single"
     artifactName: "$(ArtifactName)"
     downloadPath: "$(System.DefaultWorkingDirectory)"
 - task: PublishAzureDevOpsExtension@3
+  condition: and(succeeded(), eq(variables['BuildParameters.Publish'], 'true'))
   inputs:
     connectTo: 'VsTeam'
     connectedServiceName: 'marketplace.visualstudio.com'
