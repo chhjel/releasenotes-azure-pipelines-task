@@ -10,10 +10,18 @@
     "version": {
         "Major": 1,
         "Minor": 0,
-        "Patch": 2
+        "Patch": 5
     },
     "instanceNameFormat": "Create release notes data",
     "inputs": [
+        {
+            "name": "tagPattern",
+            "type": "string",
+            "label": "Tag pattern",
+            "defaultValue": "[0-9]*.[0-9]**",
+            "required": false,
+            "helpMarkDown": "Glob pattern used to find the previous version git tag."
+        },
         {
             "name": "jsonReleaseNotesPath",
             "type": "string",
