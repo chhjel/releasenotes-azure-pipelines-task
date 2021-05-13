@@ -102,7 +102,6 @@ async function run() {
       };
       const json = JSON.stringify(fileModel, null, 2);
       fs.writeFileSync(jsonReleaseNotesPath, json);
-      tl.associateArtifact('ReleaseNotesJson', jsonReleaseNotesPath, tl.ArtifactType.FilePath);
       console.log(`Created file '${jsonReleaseNotesPath}'.`);
       console.log(`--------------`);
       console.log(``);
@@ -121,7 +120,6 @@ async function run() {
       };
       const json = JSON.stringify(obj, null, 2);
       fs.writeFileSync(buildMetadataJsonPath, json);
-      tl.associateArtifact('BuildMetadataJson', buildMetadataJsonPath, tl.ArtifactType.FilePath);
       console.log(`Created file '${buildMetadataJsonPath}'.`);
       console.log(`--------------`);
       console.log(``);
