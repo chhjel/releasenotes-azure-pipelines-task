@@ -94,7 +94,7 @@ async function run() {
         
         console.log(`Found ${changes.length} commits:`);
         headCommit = changes[0];
-        changes.forEach(x => console.log(` * ${truncateMessage(x.message, 20)}`));
+        changes.forEach(x => console.log(` * ${truncateMessage(x.message, 40)}`));
       }
       catch(e) {
         tl.setResult(tl.TaskResult.Skipped, `Failed to find commits back to the detected tag. Error was: ${e}`);

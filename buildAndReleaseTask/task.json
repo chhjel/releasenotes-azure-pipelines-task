@@ -26,7 +26,7 @@
             "name": "jsonReleaseNotesPath",
             "type": "string",
             "label": "ReleaseNotes.json path",
-            "defaultValue": "ReleaseNotes.json",
+            "defaultValue": "App_Data/ReleaseNotes.json",
             "required": false,
             "helpMarkDown": "Optional path to output release note data in json format."
         },
