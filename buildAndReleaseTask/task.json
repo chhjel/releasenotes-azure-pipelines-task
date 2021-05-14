@@ -53,6 +53,14 @@
             "defaultValue": "",
             "required": false,
             "helpMarkDown": "Optional version number to include in buildmetadata and releasenotes json output."
+        },
+        {
+            "name": "createMissingFolders",
+            "type": "boolean",
+            "label": "Create missing folders",
+            "defaultValue": false,
+            "required": false,
+            "helpMarkDown": "Optionally create missing folders in json file paths."
         }
     ],
     "execution": {

@@ -1,5 +1,6 @@
 import tl = require("azure-pipelines-task-lib/task");
 import * as fs from 'fs';
+import * as path from 'path';
 import simpleGit, {DefaultLogFields, ListLogLine, LogResult, SimpleGit} from 'simple-git';
 import * as xml2js from "xml2js";
 
@@ -15,15 +16,16 @@ async function run() {
     let jsonReleaseNotesPath: string | undefined = tl.getInput("jsonReleaseNotesPath");
     let nuspecPath: string | undefined = tl.getInput("nuspecPath");
     let buildMetadataJsonPath: string | undefined = tl.getInput("buildMetadataJsonPath");
+    let createMissingFolders: boolean | undefined = tl.getBoolInput("createMissingFolders");
 
     // versionNumber = '1.2.3.4';
     // jsonReleaseNotesPath = 'ReleaseNotes.json';
     // nuspecPath = 'test.nuspec';
     // buildMetadataJsonPath = 'BuildMetadata.json';
-
-    console.log(`----------------------`);
-    console.log(`--- Gathering data ---`);
-    console.log(`----------------------`);
+    
+    console.log(`----------------------------`);
+    console.log(`--- Gathering data ---------`);
+    console.log(`----------------------------`);
     const git: SimpleGit = simpleGit();
     const isRepo = await git.checkIsRepo();
     if (!isRepo)
@@ -53,83 +55,144 @@ async function run() {
       console.log(`Found latest tag '${tagName}' ${numberOfCommits} commits ago (${commitShortSha}).`);
     }
     catch(e) {
-      tl.setResult(tl.TaskResult.Skipped, `No previous matching git version tags matching pattern '${tagPattern}' was found.`);
-      console.info(e);
-      return;
+      console.log(`No previous matching git version tags matching pattern '${tagPattern}' was found.`);
+      
+      const errorMessage: string = e.message;
+      if (errorMessage && errorMessage.startsWith('fatal: No names found'))
+      {
+        // Ignored
+      }
+      else {
+        console.info(e);
+      }
+
+      numberOfCommits = 1;
     }
 
     // Find commits back to the found tag
     let headCommit: (DefaultLogFields & ListLogLine) | null = null;
     let changes: ReadonlyArray<DefaultLogFields & ListLogLine> = [];
-    try {
+
+    // Found a version commit
+    if (tagName && tagName.length > 0)
+    {
+      try {
+        await git.log({
+            from: 'HEAD',
+            to: tagName
+          },
+          // @ts-ignore
+          (err, log: LogResult) => {
+            changes = log.all;
+          });
+  
+        if (changes.length == 0)
+        {
+          tl.setResult(tl.TaskResult.Skipped, `Found zero commits since the detected tag.`);
+          return;
+        }
+        
+        console.log(`Found ${changes.length} commits:`);
+        headCommit = changes[0];
+        changes.forEach(x => console.log(` * ${truncateMessage(x.message, 20)}`));
+      }
+      catch(e) {
+        tl.setResult(tl.TaskResult.Skipped, `Failed to find commits back to the detected tag. Error was: ${e}`);
+        return;
+      }
+    }
+    // Didn't find any version commit
+    else
+    {
       await git.log({
-          from: 'HEAD',
-          to: tagName
-        },
-        // @ts-ignore
-        (err, log: LogResult) => {
-          changes = log.all;
-        });
+        from: 'HEAD',
+        maxCount: 1
+      },
+      // @ts-ignore
+      (err, log: LogResult) => {
+        changes = log.all;
+      });
 
       if (changes.length == 0)
       {
-        tl.setResult(tl.TaskResult.Skipped, `Found zero commits since the detected tag.`);
+        tl.setResult(tl.TaskResult.Skipped, `Found zero commits.`);
         return;
       }
       
-      console.log(`Found ${changes.length} commits:`);
+      console.log(`Using head commmit only:`);
       headCommit = changes[0];
       changes.forEach(x => console.log(` * ${truncateMessage(x.message, 20)}`));
     }
-    catch(e) {
-      tl.setResult(tl.TaskResult.Skipped, `Failed to find commits back to the detected tag. Error was: ${e}`);
-      return;
-    }
-    console.log(`----------------------`);
+    console.log(`----------------------------`);
     console.log(``);
 
     // Create outputs
     if (jsonReleaseNotesPath)
     {
-      console.log(`--------------`);
-      console.log(`--- JSON -----`);
-      console.log(`--------------`);
-      const fileModel = {
-        builtAt: new Date(),
-        builtCommitHash: headCommit.hash,
-        version: versionNumber,
-        changes: changes.map(x => createChangeFromCommit(x))
-      };
-      const json = JSON.stringify(fileModel, null, 2);
-      fs.writeFileSync(jsonReleaseNotesPath, json);
-      console.log(`Created file '${jsonReleaseNotesPath}'.`);
-      console.log(`--------------`);
+      console.log(`----------------------------`);
+      console.log(`--- JSON Release notes -----`);
+      console.log(`----------------------------`);
+      if (createMissingFolders === true)
+      {
+        createMissingFolder(jsonReleaseNotesPath);
+      }
+
+      const parentDir = path.dirname(jsonReleaseNotesPath);
+      if (!fs.existsSync(parentDir))
+      {
+        console.log(` Skipping output, parent folder '${parentDir}' does not exist.`);
+      }
+      else
+      {
+        const fileModel = {
+          builtAt: new Date(),
+          builtCommitHash: headCommit.hash,
+          version: versionNumber,
+          changes: changes.map(x => createChangeFromCommit(x))
+        };
+        const json = JSON.stringify(fileModel, null, 2);
+        fs.writeFileSync(jsonReleaseNotesPath, json);
+        console.log(`Created file '${jsonReleaseNotesPath}'.`);
+      }
+      console.log(`----------------------------`);
       console.log(``);
     }
 
     if (buildMetadataJsonPath)
     {
-      console.log(`--------------`);
-      console.log(`--- XML ------`);
-      console.log(`--------------`);
-
-      const obj = {
-        builtAt: new Date(),
-        builtCommitHash: headCommit.hash,
-        version: versionNumber
-      };
-      const json = JSON.stringify(obj, null, 2);
-      fs.writeFileSync(buildMetadataJsonPath, json);
-      console.log(`Created file '${buildMetadataJsonPath}'.`);
-      console.log(`--------------`);
+      console.log(`----------------------------`);
+      console.log(`--- JSON Buildmetadata -----`);
+      console.log(`----------------------------`);
+      if (createMissingFolders === true)
+      {
+        createMissingFolder(buildMetadataJsonPath);
+      }
+      
+      const parentDir = path.dirname(buildMetadataJsonPath);
+      if (!fs.existsSync(parentDir))
+      {
+        console.log(` Skipping output, parent folder '${parentDir}' does not exist.`);
+      }
+      else
+      {
+        const obj = {
+          builtAt: new Date(),
+          builtCommitHash: headCommit.hash,
+          version: versionNumber
+        };
+        const json = JSON.stringify(obj, null, 2);
+        fs.writeFileSync(buildMetadataJsonPath, json);
+        console.log(`Created file '${buildMetadataJsonPath}'.`);
+      }
+      console.log(`----------------------------`);
       console.log(``);
     }
 
     if (nuspecPath)
     {
-      console.log(`--------------`);
-      console.log(`--- Nuspec ---`);
-      console.log(`--------------`);
+      console.log(`----------------------------`);
+      console.log(`--- Nuspec -----------------`);
+      console.log(`----------------------------`);
       if (!fs.existsSync(nuspecPath))
       {
         console.warn(`Could not find nuspec to update at path '${nuspecPath}'.`);
@@ -152,7 +215,7 @@ async function run() {
           console.log(`Updated nuspec '${nuspecPath}' with release notes.`);
         });
       }
-      console.log(`--------------`);
+      console.log(`----------------------------`);
       console.log(``);
     }
 
@@ -203,6 +266,14 @@ function createChangeFromCommit(commit: DefaultLogFields & ListLogLine): any
     issueIds: issueIds,
     pullRequestNumber: pullRequestNumber
   };
+}
+
+function createMissingFolder(filepath: string): void {
+  let dir = path.dirname(filepath);
+  if (!fs.existsSync(dir)) {
+    console.log(`Creating missing folder '${dir}'.`);
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 run();
