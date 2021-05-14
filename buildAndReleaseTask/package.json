@@ -1,6 +1,6 @@
 {
   "name": "buildandreleasetask",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Creates release notes from commit log back to previously commit with matching tag.",
   "main": "index.js",
   "scripts": {

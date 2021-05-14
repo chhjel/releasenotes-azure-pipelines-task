@@ -10,7 +10,7 @@
     "version": {
         "Major": 1,
         "Minor": 0,
-        "Patch": 5
+        "Patch": 6
     },
     "instanceNameFormat": "Create release notes data",
     "inputs": [
@@ -44,7 +44,7 @@
             "label": "Nuspec path",
             "defaultValue": "",
             "required": false,
-            "helpMarkDown": "Optional path to a nuspec that will have its release notes element set."
+            "helpMarkDown": "Optional path to a nuspec that will have its release notes element set. | can be used to separate multiple paths."
         },
         {
             "name": "versionNumber",

@@ -20,7 +20,7 @@ async function run() {
 
     // versionNumber = '1.2.3.4';
     // jsonReleaseNotesPath = 'ReleaseNotes.json';
-    // nuspecPath = 'test.nuspec';
+    // nuspecPath = 'test.nuspec|test2.nuspec|nope.nuspec';
     // buildMetadataJsonPath = 'BuildMetadata.json';
     
     console.log(`----------------------------`);
@@ -193,28 +193,34 @@ async function run() {
       console.log(`----------------------------`);
       console.log(`--- Nuspec -----------------`);
       console.log(`----------------------------`);
-      if (!fs.existsSync(nuspecPath))
-      {
-        console.warn(`Could not find nuspec to update at path '${nuspecPath}'.`);
-      }
-      else
-      {
-        let xml: string = fs.readFileSync(nuspecPath) as unknown as string;
-        xml2js.parseString(xml, (err, result) => {
-          const changesString = changes
-            .map(x => createNuspecChangeNoteFromCommit(x))
-            .join('\n');
-
-          const metadata = result.package.metadata;
-          metadata[0].releaseNotes = changesString;
-          
-          const builder = new xml2js.Builder();
-          xml = builder.buildObject(result);
-          
-          fs.writeFileSync(nuspecPath as string, xml);
-          console.log(`Updated nuspec '${nuspecPath}' with release notes.`);
-        });
-      }
+      const paths = nuspecPath.split('|')
+        .map(x => x.trim())
+        .filter(x => x && x.length > 0);
+      
+      paths.forEach(nuspecPath => {
+        if (!fs.existsSync(nuspecPath))
+        {
+          console.warn(`Could not find nuspec to update at path '${nuspecPath}'.`);
+        }
+        else
+        {
+          let xml: string = fs.readFileSync(nuspecPath) as unknown as string;
+          xml2js.parseString(xml, (err, result) => {
+            const changesString = changes
+              .map(x => createNuspecChangeNoteFromCommit(x))
+              .join('\n');
+  
+            const metadata = result.package.metadata;
+            metadata[0].releaseNotes = changesString;
+            
+            const builder = new xml2js.Builder();
+            xml = builder.buildObject(result);
+            
+            fs.writeFileSync(nuspecPath as string, xml);
+            console.log(`Updated nuspec '${nuspecPath}' with release notes.`);
+          });
+        }
+      });
       console.log(`----------------------------`);
       console.log(``);
     }
